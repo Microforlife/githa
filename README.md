@@ -1,4 +1,4 @@
-from flask import Flask, request, abort, render_template_string
+from flask import Flask, request, Response
 
 app = Flask(__name__)
 
@@ -6,16 +6,23 @@ app = Flask(__name__)
 USERS = {"family": "password123"}  # Replace with your own username and password
 
 def check_auth(username, password):
+    """Check if a username/password combination is valid."""
     return USERS.get(username) == password
 
 def authenticate():
-    return abort(401, description="Unauthorized access")
+    """Send a 401 response with a basic authentication challenge."""
+    return Response(
+        'Unauthorized access. Please provide valid credentials.',
+        401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+    )
 
 @app.before_request
 def before_request():
+    """Authenticate the user before processing the request."""
     auth = request.authorization
     if not auth or not check_auth(auth.username, auth.password):
-        authenticate()
+        return authenticate()
 
 @app.route('/')
 def index():
